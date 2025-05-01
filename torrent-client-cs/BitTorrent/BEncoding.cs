@@ -36,22 +36,77 @@ public static class BEncoding
 
     private static object DecodeDictionary(IEnumerator<byte> enumerator)
     {
-        throw new NotImplementedException("this method was not implemented");
+        Dictionary<string, object> dict = new Dictionary<string, object>();
+        List<string> keys = new List<string>();
+        while (enumerator.MoveNext())
+        {
+            if (enumerator.Current == DictionaryEnd) break;
+            string key = Encoding.UTF8.GetString(DecodeByteArray(enumerator));
+
+            enumerator.MoveNext();
+            object val = DecodeNextObject(enumerator);
+
+            keys.Add(key);
+            dict.Add(key, val);
+        }
+        var sortedKeys = keys.OrderBy(x => BitConverter.ToString(Encoding.UTF8.GetBytes(x)));
+        if (!keys.SequenceEqual(sortedKeys))
+            throw new Exception("error loading dictionary: keys not sorted");
+        return dict;
     }
 
-    private static object DecodeList(IEnumerator<byte> enumerator)
+    private static List<object> DecodeList(IEnumerator<byte> enumerator)
     {
-        throw new NotImplementedException("this method was not implemented");
+        List<object> list = new List<object>();
+        while (enumerator.MoveNext())
+        {
+            if (enumerator.Current == ListEnd) break;
+            list.Add(DecodeNextObject(enumerator));
+        }
+        return list;
     }
 
-    private static object DecodeNumber(IEnumerator<byte> enumerator)
+    private static long DecodeNumber(IEnumerator<byte> enumerator)
     {
-        throw new NotImplementedException("this method was not implemented");
+        List<byte> bytes = new List<byte>();
+        while (enumerator.MoveNext())
+        {
+            if (enumerator.Current == NumberEnd) break;
+            bytes.Add(enumerator.Current);
+        }
+        string numAsString = Encoding.UTF8.GetString(bytes.ToArray());
+        return Int64.Parse(numAsString);
     }
 
-    private static object DecodeByteArray(IEnumerator<byte> enumerator)
+    private static byte[] DecodeByteArray(IEnumerator<byte> enumerator)
     {
-        throw new NotImplementedException("this method was not implemented");
+        List<byte> lengthBytes = new List<byte>();
+        do
+        {
+            if (enumerator.Current == ByteArrayDivider) break;
+            lengthBytes.Add(enumerator.Current);
+        } while (enumerator.MoveNext());
+        string lengthString = Encoding.UTF8.GetString(lengthBytes.ToArray());
+
+        int length;
+        if (!Int32.TryParse(lengthString, out length))
+            throw new Exception("unable to parse length of byte array");
+
+        byte[] bytes = new byte[length];
+        for (int i = 0; i < length; i++)
+        {
+            enumerator.MoveNext();
+            bytes[i] = enumerator.Current;
+        }
+        return bytes;
+    }
+
+    public static object DecodeFile(string path)
+    {
+        if (!File.Exists(path))
+            throw new FileNotFoundException("unable to find file " + path);
+        byte[] bytes = File.ReadAllBytes(path);
+        return Decode(bytes);
     }
 }
 
