@@ -16,6 +16,7 @@ public static class BEncoding
     private static byte NumberEnd = Encoding.UTF8.GetBytes("e")[0]; // 101
     private static byte ByteArrayDivider = Encoding.UTF8.GetBytes(":")[0]; // 58
 
+    #region Decode
     public static object Decode(byte[] bytes)
     {
         IEnumerator<byte> enumerator = ((IEnumerable<byte>)bytes).GetEnumerator();
@@ -108,6 +109,7 @@ public static class BEncoding
         byte[] bytes = File.ReadAllBytes(path);
         return Decode(bytes);
     }
+    #endregion
 
 public static class MemoryStreamExtensions
 {
