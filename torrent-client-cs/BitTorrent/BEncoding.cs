@@ -108,5 +108,17 @@ public static class BEncoding
         byte[] bytes = File.ReadAllBytes(path);
         return Decode(bytes);
     }
+
+public static class MemoryStreamExtensions
+{
+    public static void Append(this MemoryStream stream, byte value)
+    {
+        stream.WriteByte(value);
+    }
+
+    public static void Append(this MemoryStream stream, byte[] values)
+    {
+        stream.Write(values, 0, values.Length);
+    }
 }
 
